@@ -4,11 +4,11 @@ import { DetectionResult } from '../types/game';
 import { classifyFromBlendshapes, classifyFromLandmarks } from '../utils/expressionDetection';
 
 // Consecutive stable face frames before triggering auto-start
-const AUTO_START_FRAMES = 6;
-// Consecutive matching expression frames to register a MATCH
-const REQUIRED_MATCH_FRAMES = 4;
+const AUTO_START_FRAMES = 5;
+// Consecutive matching expression frames to register a MATCH (2 frames = instant response ~60ms)
+const REQUIRED_MATCH_FRAMES = 2;
 // Minimum blendshape confidence to count as a match
-const MATCH_CONFIDENCE_THRESHOLD = 0.30;
+const MATCH_CONFIDENCE_THRESHOLD = 0.22;
 
 export const useExpressionDetection = (landmarker: FaceLandmarker | null) => {
   const rafRef             = useRef<number | null>(null);
@@ -112,8 +112,11 @@ export const useExpressionDetection = (landmarker: FaceLandmarker | null) => {
 
                 if (matchFrameCountRef.current >= REQUIRED_MATCH_FRAMES) {
                   matchFrameCountRef.current = 0;
-                  lastMatchedExprRef.current = ''; // reset so next target works fresh
-                  onMatchRef.current(detected.expression);
+                  targetExprRef.current = ''; // Clear target immediately to prevent multi-triggering on same target
+                  lastMatchedExprRef.current = '';
+                  if (onMatchRef.current) {
+                    onMatchRef.current(detected.expression);
+                  }
                 }
               } else {
                 // Expression no longer matches target — reset counter

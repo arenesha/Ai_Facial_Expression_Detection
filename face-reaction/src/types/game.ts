@@ -1,12 +1,18 @@
-export type Expression = 'smile' | 'surprised' | 'neutral' | 'angry' | 'wink' | 'sad';
+export type Expression = 
+  | 'smile' 
+  | 'wink' 
+  | 'surprised' 
+  | 'angry' 
+  | 'kiss' 
+  | 'sleepy';
 
 export const EXPRESSIONS: Record<Expression, { emoji: string; label: string }> = {
-  smile: { emoji: '😊', label: 'SMILE' },
-  surprised: { emoji: '😮', label: 'SURPRISED' },
-  neutral: { emoji: '😐', label: 'NEUTRAL' },
-  angry: { emoji: '😠', label: 'ANGRY' },
+  smile: { emoji: '😊', label: 'HAPPY' },
   wink: { emoji: '😉', label: 'WINK' },
-  sad: { emoji: '😢', label: 'SAD' }
+  surprised: { emoji: '😮', label: 'SURPRISED' },
+  angry: { emoji: '😠', label: 'ANGRY' },
+  kiss: { emoji: '😗', label: 'KISSY' },
+  sleepy: { emoji: '😴', label: 'SLEEPY' },
 };
 
 export type GameState = 

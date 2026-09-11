@@ -16,17 +16,17 @@ export const TargetPanel: React.FC<TargetPanelProps> = ({ target, isMatched, rou
   return (
     <div className="flex flex-col h-full relative">
       <CyberFrame cut="all" color="cyan" className="h-full">
-        <div className="flex flex-col items-center justify-between h-full relative p-5 bg-[#020718]/45 backdrop-blur-md">
+        <div className="flex flex-col items-center justify-between h-full relative p-3.5 pb-3 bg-[#020718]/45 backdrop-blur-md">
           
           {/* Header Tab */}
-          <div className="text-center pt-2">
+          <div className="text-center pt-1">
             <div className="text-[11px] font-black tracking-[0.25em] text-neon-cyan uppercase drop-shadow-[0_0_8px_rgba(0,240,255,0.7)]">
               TARGET EXPRESSION
             </div>
           </div>
 
           {/* Glowing Reticle with Emoji */}
-          <div className="relative my-auto flex items-center justify-center w-48 h-48">
+          <div className="relative my-auto flex items-center justify-center w-36 h-36">
             {/* Concentric Target Reticle */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]">
@@ -42,17 +42,17 @@ export const TargetPanel: React.FC<TargetPanelProps> = ({ target, isMatched, rou
             </div>
 
             {/* Radiant 3D Emoji */}
-            <div className={`relative z-10 text-[88px] leading-none select-none transition-transform duration-300 drop-shadow-[0_0_20px_rgba(255,200,0,0.5)] ${isMatched ? 'scale-125 animate-bounce' : ''}`}>
+            <div className={`relative z-10 text-[76px] leading-none select-none transition-transform duration-300 drop-shadow-[0_0_20px_rgba(255,200,0,0.5)] ${isMatched ? 'scale-125 animate-bounce' : ''}`}>
               {data.emoji}
             </div>
           </div>
 
           {/* Match Label */}
-          <div className="flex flex-col items-center gap-1 pb-3">
-            <span className={`text-[11px] font-black tracking-[0.25em] uppercase ${isMatched ? 'text-[#00ff88]' : 'text-white/90'}`}>
+          <div className="flex flex-col items-center gap-0.5 pb-1">
+            <span className={`text-[10px] font-black tracking-[0.25em] uppercase ${isMatched ? 'text-[#00ff88]' : 'text-white/90'}`}>
               {isMatched ? '✔ MATCHED!' : 'MATCH:'}
             </span>
-            <span className={`text-2xl font-black tracking-widest uppercase drop-shadow-[0_0_10px_rgba(0,240,255,0.8)] ${isMatched ? 'neon-text-green' : 'neon-text-cyan'}`}>
+            <span className={`text-xl font-black tracking-widest uppercase drop-shadow-[0_0_10px_rgba(0,240,255,0.8)] ${isMatched ? 'neon-text-green' : 'neon-text-cyan'}`}>
               {data.label}
             </span>
           </div>

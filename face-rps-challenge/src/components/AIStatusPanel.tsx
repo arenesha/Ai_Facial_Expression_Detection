@@ -20,9 +20,9 @@ export const AIStatusPanel: React.FC<AIStatusPanelProps> = ({
   ];
 
   return (
-    <div className="h-[140px] relative">
+    <div className="h-[118px] relative">
       <CyberFrame cut="all" color="cyan" className="h-full">
-        <div className="flex items-center gap-5 p-4 h-full bg-[#020718]/45 backdrop-blur-md">
+        <div className="flex items-center gap-4 p-3 h-full bg-[#020718]/45 backdrop-blur-md">
           {/* Wireframe head SVG */}
           <div className="flex-shrink-0 relative">
             <svg

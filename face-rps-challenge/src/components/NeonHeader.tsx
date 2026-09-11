@@ -29,11 +29,11 @@ export const NeonHeader: React.FC<NeonHeaderProps> = ({
   const formattedRoundTime = String(Math.max(0, roundTimeLeft)).padStart(2, '0');
 
   return (
-    <div className="w-full flex-shrink-0 pt-3 px-6 relative z-10">
-      <div className="flex items-center justify-between max-w-[1600px] mx-auto">
+    <div className="w-full flex-shrink-0 pt-2.5 px-4 relative z-10">
+      <div className="flex items-center justify-between max-w-[1240px] mx-auto">
         
         {/* Left: Score + Streak */}
-        <div className="w-[280px] h-[72px]">
+        <div className="w-[240px] h-[68px]">
           <CyberFrame cut="all" color="cyan" className="h-full">
             <div className="flex h-full divide-x divide-white/10 bg-[#020718]/80 backdrop-blur-md">
               <div className="flex-1 flex flex-col items-center justify-center">
@@ -59,8 +59,8 @@ export const NeonHeader: React.FC<NeonHeaderProps> = ({
               😊
             </div>
             <h1 className="text-3xl md:text-4xl font-black tracking-wider uppercase flex items-center gap-2">
-              <span className="text-white drop-shadow-[0_0_12px_rgba(0,240,255,0.8)]">FACE</span>
-              <span className="text-[#ff00ff] drop-shadow-[0_0_14px_rgba(255,0,255,0.8)]">REACTION</span>
+              <span className="text-neon-cyan drop-shadow-[0_0_15px_rgba(0,240,255,0.9)]">FACE</span>
+              <span className="text-neon-magenta drop-shadow-[0_0_15px_rgba(255,0,255,0.9)]">REACTION</span>
             </h1>
           </div>
           <p className="text-[10px] font-extrabold tracking-[0.25em] text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.5)] uppercase mt-1">
@@ -68,20 +68,30 @@ export const NeonHeader: React.FC<NeonHeaderProps> = ({
           </p>
         </div>
 
-        {/* Right: Round + Time Left + AI Active Pill */}
-        <div className="w-[280px] h-[72px] relative flex items-center">
-          {/* AI Active Pill positioned above header right */}
-          <div className="absolute -top-3 right-0 z-20">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-[#00ff88]/60 bg-[#02150c]/90 shadow-[0_0_12px_rgba(0,255,136,0.3)]">
-              <span className="w-2 h-2 rounded-full bg-[#00ff88] shadow-[0_0_6px_#00ff88] animate-pulse" />
-              <span className="text-[10px] font-black tracking-widest text-[#00ff88] uppercase">
-                {isPlaying ? `AI: ACTIVE • ⏱ ${formatGameTime(totalTimeLeft)}` : 'AI: ACTIVE'}
+        {/* Right: Round + Time Left + MORE GAMES + AI Active Pill */}
+        <div className="w-[280px] h-[68px] relative flex items-center">
+          {/* Top-Right Pills: MORE GAMES & AI Active */}
+          <div className="absolute -top-3.5 right-0 z-20 flex items-center gap-2">
+            <a
+              href="https://game.arenesha.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hud-pill-btn hub-pill-btn flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#05060f]/90 border border-[#00f0ff]/80 text-[#00f0ff] font-orbitron text-[9px] font-extrabold tracking-wider uppercase shadow-[0_0_12px_rgba(0,240,255,0.4)] hover:bg-[#00f0ff]/20 hover:border-[#ff00c8] hover:text-[#ff00c8] transition-all"
+              title="Explore More AI Games on Arenesha"
+            >
+              <span className="hud-btn-icon">🌐</span>
+              <span>MORE GAMES &gt;</span>
+            </a>
+
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#00ff88]/60 bg-[#02150c]/90 shadow-[0_0_12px_rgba(0,255,136,0.3)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88] shadow-[0_0_6px_#00ff88] animate-pulse" />
+              <span className="text-[9px] font-black tracking-widest text-[#00ff88] uppercase">
+                AI: ACTIVE
               </span>
-              <div className="flex items-end gap-[2px] ml-0.5 h-2.5">
-                <div className="w-[2px] h-1 bg-[#00ff88] rounded-xs" />
-                <div className="w-[2px] h-1.5 bg-[#00ff88] rounded-xs" />
-                <div className="w-[2px] h-2 bg-[#00ff88] rounded-xs" />
-                <div className="w-[2px] h-2.5 bg-[#00ff88] rounded-xs" />
+              <div className="flex items-end gap-[1.5px] ml-0.5 h-2">
+                <div className="w-[1.5px] h-1 bg-[#00ff88] rounded-xs" />
+                <div className="w-[1.5px] h-1.5 bg-[#00ff88] rounded-xs" />
+                <div className="w-[1.5px] h-2 bg-[#00ff88] rounded-xs" />
               </div>
             </div>
           </div>

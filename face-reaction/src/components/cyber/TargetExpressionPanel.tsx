@@ -1,71 +1,92 @@
 import React from 'react';
-import { Target, Expression } from '@/types/game';
+import { Target, Expression, EXPRESSIONS } from '@/types/game';
 
 interface TargetExpressionPanelProps {
   currentTarget: Target | null;
+  detectedExpression?: Expression | 'unknown';
+  isMatching?: boolean;
 }
 
-// Map internal expression keys to reference labels and emojis
-const EXPRESSION_MAP: Record<Expression, { label: string; emoji: string }> = {
-  smile: { label: 'HAPPY', emoji: '😊' },
-  sad: { label: 'SAD', emoji: '😢' },
-  surprised: { label: 'SURPRISED', emoji: '😮' },
-  angry: { label: 'ANGRY', emoji: '😠' },
-  neutral: { label: 'NEUTRAL', emoji: '😐' },
-  wink: { label: 'SILLY', emoji: '😜' },
-};
-
-export const TargetExpressionPanel: React.FC<TargetExpressionPanelProps> = ({ currentTarget }) => {
+export const TargetExpressionPanel: React.FC<TargetExpressionPanelProps> = ({
+  currentTarget,
+  detectedExpression,
+  isMatching = false,
+}) => {
   const current = currentTarget
-    ? EXPRESSION_MAP[currentTarget.expression] || { label: 'HAPPY', emoji: '😊' }
+    ? EXPRESSIONS[currentTarget.expression] || { label: 'HAPPY', emoji: '😊' }
     : { label: 'HAPPY', emoji: '😊' };
 
+  const activeMatch = isMatching ||
+    (detectedExpression && detectedExpression !== 'unknown' &&
+      currentTarget && detectedExpression === currentTarget.expression);
+
   return (
-    <div className="hud-panel rounded-2xl p-4 flex flex-col items-center justify-between w-full h-full relative overflow-hidden border-cyan-500/40">
-      {/* Subtle corner cyber notches */}
-      <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#00f0ff]" />
-      <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#00f0ff]" />
-      <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#00f0ff]" />
-      <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#00f0ff]" />
+    <div className="relative w-full h-[285px] p-[2px] clip-cyber-chamfer bg-[#00e5ff]/80 shadow-[0_0_22px_rgba(0,229,255,0.45)]">
+      <div
+        className="relative clip-cyber-chamfer p-3 flex flex-col items-center justify-between w-full h-full bg-[#020617]/95 backdrop-blur-md overflow-hidden transition-all duration-300"
+        style={activeMatch ? {
+          boxShadow: '0 0 35px rgba(0,255,157,0.6), inset 0 0 20px rgba(0,255,157,0.3)',
+        } : {}}
+      >
+        {/* Top Header */}
+        <div className="w-full text-center pb-1 pt-1 flex items-center justify-center gap-1.5">
+          <span className="text-[#00e5ff] text-xs">🎯</span>
+          <h3 className="font-orbitron font-black text-[12px] tracking-[0.15em] uppercase text-[#00e5ff] drop-shadow-[0_0_10px_rgba(0,229,255,1)]">
+            TARGET EXPRESSION
+          </h3>
+        </div>
 
-      {/* Top Header */}
-      <div className="w-full text-center pb-2 border-b border-cyan-500/20">
-        <h3 className="font-orbitron font-bold text-xs tracking-[0.2em] text-[#00f0ff] uppercase text-glow-cyan">
-          TARGET EXPRESSION
-        </h3>
-      </div>
+        {/* Central Circular Radar-Lock Rings with 4 Glowing Star Particles */}
+        <div className="relative flex items-center justify-center my-auto w-[140px] h-[140px]">
+          {/* Glowing particle stars around target emoji */}
+          <span className="absolute top-1 left-2 text-[#00e5ff] text-xs animate-pulse drop-shadow-[0_0_6px_#00e5ff]">✦</span>
+          <span className="absolute top-2 right-2 text-[#ff2fa4] text-xs animate-pulse drop-shadow-[0_0_6px_#ff2fa4]">✦</span>
+          <span className="absolute bottom-2 left-2 text-[#00e5ff] text-xs animate-pulse drop-shadow-[0_0_6px_#00e5ff]">✦</span>
+          <span className="absolute bottom-1 right-2 text-[#ff2fa4] text-xs animate-pulse drop-shadow-[0_0_6px_#ff2fa4]">✦</span>
 
-      {/* Central Circular HUD Reticle */}
-      <div className="relative flex items-center justify-center my-3 w-40 h-40">
-        {/* Outer glowing cyan segmented ring */}
-        <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#00f0ff]/50 animate-spin-slow" />
-        
-        {/* Secondary neon pink accent arc ring */}
-        <div className="absolute inset-2 rounded-full border border-[#ff007f]/40 animate-spin-slow-reverse" />
-        
-        {/* Inner solid HUD circle */}
-        <div className="absolute inset-4 rounded-full bg-gradient-to-b from-[#0a1b38]/70 to-[#050b1d]/90 border border-cyan-400/40 shadow-[0_0_25px_rgba(0,240,255,0.25)] flex items-center justify-center" />
+          {/* Outer Cyan Arc Ring */}
+          <svg className="absolute inset-0 w-full h-full text-[#00e5ff] drop-shadow-[0_0_10px_#00e5ff]" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="44" stroke="currentColor" strokeWidth="2.5" fill="none" strokeDasharray="52 18" strokeDashoffset="8" />
+            <circle cx="50" cy="6" r="3" fill="#00e5ff" />
+            <circle cx="94" cy="50" r="3" fill="#00e5ff" />
+            <circle cx="50" cy="94" r="3" fill="#00e5ff" />
+            <circle cx="6" cy="50" r="3" fill="#00e5ff" />
+          </svg>
 
-        {/* Reticle tick marks */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-3 bg-[#00f0ff] shadow-[0_0_6px_#00f0ff]" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-3 bg-[#00f0ff] shadow-[0_0_6px_#00f0ff]" />
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 w-3 bg-[#ff007f] shadow-[0_0_6px_#ff007f]" />
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 h-1 w-3 bg-[#ff007f] shadow-[0_0_6px_#ff007f]" />
+          {/* Outer Magenta Side Arc Brackets */}
+          <svg className="absolute inset-0 w-full h-full text-[#ff2fa4] drop-shadow-[0_0_10px_#ff2fa4]" viewBox="0 0 100 100">
+            <path d="M 12 34 Q 2 50 12 66" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <path d="M 88 34 Q 98 50 88 66" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          </svg>
 
-        {/* Large Central Emoji */}
-        <span className="relative text-7xl select-none filter drop-shadow-[0_4px_16px_rgba(255,200,0,0.4)] transform hover:scale-105 transition-transform duration-300">
-          {current.emoji}
-        </span>
-      </div>
+          {/* Inner Glowing Cyan Ring */}
+          <div className="absolute inset-3 rounded-full border-2 border-[#00e5ff] shadow-[0_0_20px_rgba(0,229,255,0.9),inset_0_0_14px_rgba(0,229,255,0.4)] flex items-center justify-center bg-gradient-to-b from-[#0a1835]/90 to-[#020617]" />
 
-      {/* Match Label & Expression Name */}
-      <div className="text-center pt-2 w-full border-t border-cyan-500/20 flex flex-col items-center gap-0.5">
-        <span className="font-rajdhani text-xs tracking-widest text-slate-400 font-semibold uppercase">
-          MATCH:
-        </span>
-        <span className="font-orbitron font-extrabold text-2xl tracking-wider text-[#00f0ff] text-glow-cyan">
-          {current.label}
-        </span>
+          {/* Large Glowing Circular Emoji */}
+          <span
+            className="relative select-none filter transition-all duration-300 transform z-10"
+            style={{
+              fontSize: '4.8rem',
+              filter: activeMatch
+                ? 'drop-shadow(0 0 35px rgba(0,255,157,0.95)) drop-shadow(0 4px 20px rgba(255,200,0,0.85))'
+                : 'drop-shadow(0 0 28px rgba(255,200,0,0.85)) drop-shadow(0 4px 14px rgba(0,0,0,0.7))',
+            }}
+          >
+            {current.emoji}
+          </span>
+        </div>
+
+        {/* Match Label & Expression Name */}
+        <div className="text-center pt-0 w-full flex flex-col items-center gap-0">
+          <span className="font-orbitron text-[10.5px] tracking-[0.15em] text-[#00e5ff] font-extrabold uppercase drop-shadow-[0_0_8px_rgba(0,229,255,0.8)]">
+            MATCH:
+          </span>
+          <span
+            className="font-orbitron font-black text-[28px] tracking-[0.05em] uppercase transition-colors duration-300 leading-tight text-[#00e5ff] drop-shadow-[0_0_15px_rgba(0,229,255,1)]"
+          >
+            {current.label}
+          </span>
+        </div>
       </div>
     </div>
   );

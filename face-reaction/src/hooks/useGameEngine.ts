@@ -3,13 +3,13 @@ import { GameState, Target, GameMetrics } from '../types/game';
 import { generateInitialQueue, generateTarget } from '../utils/targetGenerator';
 import { calculateScore } from '../utils/scoreCalculator';
 
-export const DEFAULT_TARGET_DURATION_MS = 5_000; // 5 seconds maximum per target
-export const MAX_ROUNDS = 10; // 10 rounds total
+export const DEFAULT_TARGET_DURATION_MS = 5_000; // 5 seconds per target expression
+export const TOTAL_GAME_DURATION_MS = 120_000; // 2 minutes (120 seconds) continuous session
 
 export const useGameEngine = () => {
   const [gameState, setGameState] = useState<GameState>('IDLE');
 
-  // Overall Game Session Timer (counts UP from 0ms: 00:00, 00:01, ...)
+  // Overall Game Session Timer (counts UP to 120,000ms / 2 minutes)
   const [overallGameTimeMs, setOverallGameTimeMs] = useState(0);
 
   // Expression Timer (counts DOWN from 5000ms: 5, 4, 3, 2, 1, 0)
@@ -49,17 +49,8 @@ export const useGameEngine = () => {
     lastTickRef.current = null;
   }, []);
 
-  // ── Advance to next target immediately ─────────────────────────────────────
+  // ── Advance to next target immediately (Continuous without round limit) ────
   const advanceTarget = useCallback(() => {
-    const totalRounds = metricsRef.current.matched + metricsRef.current.missed;
-    if (totalRounds >= MAX_ROUNDS) {
-      // Game Over after 10 rounds
-      stopLoop();
-      gameStateRef.current = 'GAME_OVER';
-      setGameState('GAME_OVER');
-      return;
-    }
-
     setTargetQueue(prevQueue => {
       const newQueue = [...prevQueue];
       const next = newQueue.shift();
@@ -76,9 +67,9 @@ export const useGameEngine = () => {
     targetTimeLeftRef.current = DEFAULT_TARGET_DURATION_MS;
     setTargetTimeLeft(DEFAULT_TARGET_DURATION_MS);
     targetStartRef.current = performance.now();
-  }, [stopLoop]);
+  }, []);
 
-  // ── Handle Miss (5-Second Timeout Expired) ─────────────────────────────────
+  // ── Handle Miss (5-Second Target Timeout Expired) ─────────────────────────
   const handleMiss = useCallback(() => {
     if (gameStateRef.current !== 'PLAYING') return;
 
@@ -120,7 +111,7 @@ export const useGameEngine = () => {
     return pointsAdded;
   }, [advanceTarget]);
 
-  // ── High Precision Timestamp Game Loop ────────────────────────────────────
+  // ── High Precision Timestamp Game Loop (2-Minute Continuous Session) ──────
   const gameLoop = useCallback((ts: number) => {
     if (gameStateRef.current !== 'PLAYING') return;
 
@@ -128,11 +119,19 @@ export const useGameEngine = () => {
     const delta = ts - lastTickRef.current;
     lastTickRef.current = ts;
 
-    // 1. Overall Game Session Timer (counts up continuously)
+    // 1. Overall Game Session Timer (counts up to 2 minutes / 120 seconds)
     overallGameTimeRef.current += delta;
+    if (overallGameTimeRef.current >= TOTAL_GAME_DURATION_MS) {
+      overallGameTimeRef.current = TOTAL_GAME_DURATION_MS;
+      setOverallGameTimeMs(TOTAL_GAME_DURATION_MS);
+      stopLoop();
+      gameStateRef.current = 'GAME_OVER';
+      setGameState('GAME_OVER');
+      return;
+    }
     setOverallGameTimeMs(overallGameTimeRef.current);
 
-    // 2. Expression Timer (counts down from 5,000ms)
+    // 2. Expression Target Timer (counts down from 5,000ms)
     const newTargetTime = targetTimeLeftRef.current - delta;
     if (newTargetTime <= 0) {
       // 5-second timeout reached: trigger miss & advance immediately
@@ -145,7 +144,7 @@ export const useGameEngine = () => {
     }
 
     rafRef.current = requestAnimationFrame(gameLoop);
-  }, [handleMiss]);
+  }, [handleMiss, stopLoop]);
 
   // ── Begin New Game Session ────────────────────────────────────────────────
   const beginPlaying = useCallback(() => {
@@ -158,7 +157,7 @@ export const useGameEngine = () => {
     setCurrentTarget(firstTarget);
     setTargetQueue(initialQueue);
 
-    // Reset overall game timer only on fresh game start
+    // Reset overall game timer to 0
     overallGameTimeRef.current = 0;
     setOverallGameTimeMs(0);
 
@@ -175,7 +174,7 @@ export const useGameEngine = () => {
     rafRef.current = requestAnimationFrame(gameLoop);
   }, [stopLoop, gameLoop]);
 
-  // ── Pause Game (Preserves exact remaining time on both timers) ─────────────
+  // ── Pause Game ────────────────────────────────────────────────────────────
   const pauseGame = useCallback(() => {
     if (gameStateRef.current !== 'PLAYING') return;
     stopLoop();
@@ -183,7 +182,7 @@ export const useGameEngine = () => {
     setGameState('PAUSED');
   }, [stopLoop]);
 
-  // ── Resume Game (Resumes from exact millisecond values) ────────────────────
+  // ── Resume Game ───────────────────────────────────────────────────────────
   const resumeGame = useCallback(() => {
     if (gameStateRef.current !== 'PAUSED') return;
     gameStateRef.current = 'PLAYING';

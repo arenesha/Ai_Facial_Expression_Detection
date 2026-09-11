@@ -322,22 +322,22 @@ export const Game: React.FC = () => {
       />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col px-6 pb-16 gap-3 max-w-[1600px] mx-auto w-full min-h-0 relative z-[10] mt-1">
+      <main className="flex-1 flex flex-col px-4 pb-2 gap-2 max-w-[1240px] mx-auto w-full min-h-0 relative z-[10] mt-0.5">
         {/* 3-Column Layout */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-6 min-h-0 items-stretch">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[240px_1fr_240px] gap-4 min-h-0 items-stretch">
           
           {/* Left Column */}
-          <div className="hidden lg:flex flex-col min-h-0">
+          <div className="hidden lg:flex flex-col min-h-0 pb-12">
             <TargetPanel
-              target={target}
+              target={target || 'happy'}
               isMatched={matchedFlash || matchBanner}
               roundTimeLeft={phase === 'detecting' ? timeLeft : undefined}
             />
           </div>
 
           {/* Center Column */}
-          <div className="flex flex-col justify-between gap-3 min-h-0 relative pb-2">
-            <div className="flex-1 min-h-[300px] max-h-[460px] relative">
+          <div className="flex flex-col justify-between gap-2.5 min-h-0 relative pb-1">
+            <div className="flex-1 min-h-[240px] max-h-[440px] relative">
               <CameraPanel
                 videoRef={videoRef}
                 canvasRef={canvasRef}
@@ -351,12 +351,11 @@ export const Game: React.FC = () => {
             </div>
             
             {/* Controls Area below camera */}
-            <div className="flex flex-col items-center gap-2.5 flex-shrink-0">
+            <div className="flex flex-col items-center gap-2 flex-shrink-0">
               {phase === 'idle' || isGameOver ? (
                 <button
                   onClick={handleStartClick}
-                  className="w-[380px] sm:w-[440px] h-[46px] flex items-center justify-center gap-3 bg-gradient-to-r from-[#00f0ff] via-[#b845ff] to-[#ff00c8] text-black font-black text-sm uppercase tracking-widest shadow-[0_0_25px_rgba(0,240,255,0.7),0_0_25px_rgba(255,0,200,0.7)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer select-none"
-                  style={{ clipPath: 'polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)' }}
+                  className="w-[360px] sm:w-[420px] h-[48px] rounded-xl flex items-center justify-center gap-3 bg-gradient-to-r from-[#00f0ff] via-[#b845ff] to-[#ff00c8] text-black font-black text-sm uppercase tracking-widest shadow-[0_0_25px_rgba(0,240,255,0.7),0_0_25px_rgba(255,0,200,0.7)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer select-none border-none"
                 >
                   <span className="text-xl leading-none">📷</span>
                   <span className="text-[13px] sm:text-sm font-black tracking-widest text-black">
@@ -364,13 +363,13 @@ export const Game: React.FC = () => {
                   </span>
                 </button>
               ) : phase === 'countdown' ? (
-                <div className="h-[46px] flex items-center justify-center">
+                <div className="h-[48px] flex items-center justify-center">
                   <div className="text-5xl font-black neon-text-cyan animate-countDown" key={countdownNum}>
                     {countdownNum > 0 ? countdownNum : 'GO!'}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 h-[46px]">
+                <div className="flex items-center gap-3 h-[48px]">
                   {/* Live Matched Count */}
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#00ff88]/60 bg-[#02150c]/90 shadow-[0_0_12px_rgba(0,255,136,0.3)]">
                     <span className="text-[10px] font-black text-white/70 uppercase">✔ Matched:</span>
@@ -383,17 +382,10 @@ export const Game: React.FC = () => {
                     <span className="text-sm font-black font-mono text-red-400">{missedCount}</span>
                   </div>
 
-                  {/* 1-Minute Session Timer */}
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-neon-cyan/60 bg-black/70 shadow-[0_0_12px_rgba(0,240,255,0.3)]">
-                    <span className="text-[10px] font-black text-white/70 uppercase">⏱ Session:</span>
-                    <span className="text-sm font-black font-mono neon-text-cyan">{formatTime(totalTimeLeft)}</span>
-                  </div>
-
                   {/* Pause / Resume Button */}
                   <button 
                     onClick={handlePauseToggle} 
-                    className="flex items-center justify-center gap-1 px-4 py-1.5 border border-neon-magenta text-neon-magenta text-xs font-bold uppercase tracking-widest hover:bg-neon-magenta/10 transition-colors"
-                    style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)' }}
+                    className="flex items-center justify-center gap-1 px-4 py-1.5 border border-neon-magenta text-neon-magenta text-xs font-bold uppercase tracking-widest hover:bg-neon-magenta/10 transition-colors rounded"
                   >
                     {isPaused ? '▶ Resume' : '⏸ Pause'}
                   </button>
@@ -442,6 +434,16 @@ export const Game: React.FC = () => {
                       <button onClick={handleStartClick} className="w-full btn-cyber justify-center py-3 text-sm">
                         <span>PLAY AGAIN</span>
                       </button>
+
+                      <a
+                        href="https://game.arenesha.ai"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hud-pill-btn hub-pill-btn flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#050a1a]/90 border border-[#00f0ff]/80 text-[#00f0ff] font-orbitron text-xs font-black tracking-widest uppercase shadow-[0_0_15px_rgba(0,240,255,0.4)] hover:bg-[#00f0ff]/20 hover:border-[#ff00c8] hover:text-[#ff00c8] transition-all text-center mt-2"
+                        title="Explore More AI Games on Arenesha"
+                      >
+                        <span className="hud-btn-icon">🌐</span> MORE GAMES
+                      </a>
                     </div>
                   </CyberFrame>
                 </div>
@@ -450,42 +452,31 @@ export const Game: React.FC = () => {
           </div>
 
           {/* Right Column */}
-          <div className="hidden lg:flex flex-col min-h-0 gap-4">
-            <ExpressionGuide currentTarget={target} matchedExpression={matchedFlash ? target : null} />
+          <div className="hidden lg:flex flex-col min-h-0 gap-3 pb-12">
+            <ExpressionGuide currentTarget={target || 'happy'} matchedExpression={matchedFlash ? (target || 'happy') : null} />
             <AIStatusPanel isDetecting={phase === 'detecting' && !isPaused} faceDetected={detection.detected} isMatched={matchedFlash} />
           </div>
         </div>
       </main>
 
       {/* Decorative Bottom-Left Corner Text */}
-      <div className="absolute bottom-5 left-8 z-10 pointer-events-none select-none">
-        <p className="text-[11px] font-black tracking-[0.25em] uppercase leading-[1.3] text-left">
+      <div className="absolute bottom-3 left-6 z-20 select-none flex flex-col items-start gap-2 pointer-events-none">
+        <p className="text-[10px] sm:text-[11px] font-black tracking-[0.25em] uppercase leading-[1.3] text-left">
           <span className="text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]">YOUR</span><br />
           <span className="text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]">EXPRESSIONS</span><br />
           <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]">POWER</span><br />
           <span className="text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]">THE GAME</span>
         </p>
+        <div className="w-16 h-[2px] bg-neon-cyan shadow-[0_0_8px_rgba(0,240,255,0.8)]" />
       </div>
 
-      {/* Decorative Bottom-Right Corner: THINK EXPRESS PLAY and MORE GAMES */}
-      <div className="absolute bottom-5 right-8 z-30 flex items-center gap-4">
-        <div className="text-right pointer-events-none select-none hidden sm:block">
-          <p className="text-[11px] font-black tracking-[0.25em] uppercase leading-[1.3]">
-            <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">THINK</span><br />
-            <span className="text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]">EXPRESS</span><br />
-            <span className="text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]">PLAY</span>
-          </p>
-        </div>
-        <a
-          href="https://game.arenesha.ai"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hud-pill-btn hub-pill-btn flex items-center gap-1.5 px-3 py-1.5 border border-neon-cyan/70 bg-[#020718]/90 hover:bg-neon-cyan/20 transition-all text-neon-cyan text-[11px] font-bold tracking-widest uppercase rounded shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:scale-105"
-          title="Explore More AI Games on Arenesha"
-        >
-          <span className="hud-btn-icon text-sm leading-none">🌐</span>
-          <span>MORE GAMES</span>
-        </a>
+      {/* Decorative Bottom-Right Corner: THINK EXPRESS PLAY */}
+      <div className="absolute bottom-4 right-6 z-10 pointer-events-none select-none text-right">
+        <p className="text-[10px] sm:text-[11px] font-black tracking-[0.25em] uppercase leading-[1.3]">
+          <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">THINK</span><br />
+          <span className="text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]">EXPRESS</span><br />
+          <span className="text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]">PLAY</span>
+        </p>
       </div>
     </div>
   );
