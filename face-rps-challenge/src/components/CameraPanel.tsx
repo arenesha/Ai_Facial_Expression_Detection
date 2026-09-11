@@ -1,6 +1,6 @@
 import React from 'react';
-import type { Move, Expression, FaceDetectionResult } from '@/types/game';
-import { EXPRESSION_EMOJI, EXPRESSION_LABELS, MOVE_EMOJI, MOVE_LABELS, EXPRESSION_TO_MOVE } from '@/types/game';
+import { CyberFrame } from './CyberFrame';
+import type { FaceDetectionResult } from '@/types/game';
 
 interface CameraPanelProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -8,7 +8,9 @@ interface CameraPanelProps {
   detection: FaceDetectionResult;
   cameraError: string | null;
   onRequestCamera: () => void;
-  lockedMove?: Move | null;  // when move is locked after "GO!"
+  matchBanner?: boolean;
+  missedBanner?: boolean;
+  lastMatchPoints?: number;
 }
 
 export const CameraPanel: React.FC<CameraPanelProps> = ({
@@ -17,110 +19,114 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   detection,
   cameraError,
   onRequestCamera,
-  lockedMove,
+  matchBanner = false,
+  missedBanner = false,
+  lastMatchPoints = 100,
 }) => {
-  const expression: Expression = detection.expression ?? 'unknown';
-  const move: Move | null =
-    lockedMove ??
-    (detection.detected && expression !== 'unknown'
-      ? EXPRESSION_TO_MOVE[expression as Exclude<Expression, 'unknown'>]
-      : null);
-
   return (
-    <div className="flex flex-col gap-3">
-      {/* Camera viewport */}
-      <div className="relative bg-dark-800 rounded-2xl overflow-hidden border border-white/10 aspect-video">
-        {cameraError ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center">
-            <svg className="w-10 h-10 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-              <path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /><line x1="3" y1="3" x2="21" y2="21" />
-            </svg>
-            <div>
-              <p className="text-white font-semibold mb-1">Camera Access Required</p>
-              <p className="text-white/50 text-sm mb-4">{cameraError}</p>
-              <button
-                onClick={onRequestCamera}
-                className="px-5 py-2 bg-accent hover:bg-accent-light text-white text-sm font-semibold rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                Enable Camera
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Mirrored video */}
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              style={{ transform: 'scaleX(-1)' }}
-              autoPlay
-              playsInline
-              muted
-              aria-label="Webcam feed"
-            />
-            {/* Landmark canvas overlay */}
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              style={{ transform: 'scaleX(-1)' }}
-            />
-            {/* Status pill */}
-            <div className="absolute top-3 left-3">
-              {detection.detected ? (
-                <span className="inline-flex items-center gap-1.5 bg-win/20 border border-win/50 text-win text-xs font-bold px-3 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-win animate-pulse" />
-                  FACE DETECTED
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 bg-red-500/20 border border-red-500/50 text-red-400 text-xs font-bold px-3 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                  NO FACE
-                </span>
-              )}
-            </div>
-            {/* YOU label */}
-            <div className="absolute bottom-3 left-3 text-white/40 text-xs font-semibold tracking-widest uppercase">You</div>
-          </>
-        )}
+    <div className="flex flex-col h-full relative">
+      <div className="absolute top-2 left-6 z-20">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.2em] text-white/70 uppercase bg-[#030612] px-2 py-0.5 border border-neon-cyan/40">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88] shadow-[0_0_6px_#00ff88] animate-pulse" />
+          <span>CAMERA • LIVE</span>
+        </div>
       </div>
 
-      {/* Expression readout */}
-      <div className="bg-dark-700/60 backdrop-blur border border-white/10 rounded-xl p-4">
-        {detection.detected && expression !== 'unknown' ? (
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs text-white/40 uppercase tracking-widest mb-0.5">Detected Expression</div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl" aria-hidden>{EXPRESSION_EMOJI[expression]}</span>
-                <div>
-                  <div className="text-sm font-semibold text-white">{EXPRESSION_LABELS[expression]}</div>
-                  <div className="text-xs text-white/40">
-                    Your move:{' '}
-                    <span className="text-accent font-bold">
-                      {move ? `${MOVE_EMOJI[move]} ${MOVE_LABELS[move]}` : '—'}
-                    </span>
-                  </div>
+      <CyberFrame cut="all" color="cyan" className="h-full mt-4" contentClassName="p-1">
+        <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#030612]">
+          {/* Match Celebration Overlay (1 full second) */}
+          {matchBanner && (
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/75 backdrop-blur-md pointer-events-none animate-fadeUp">
+              <div className="text-6xl mb-2 animate-bounce">🎉</div>
+              <div className="text-3xl font-black neon-text-green tracking-widest uppercase drop-shadow-[0_0_20px_rgba(0,255,136,1)]">
+                MATCHED!
+              </div>
+              <div className="text-lg font-black text-neon-cyan tracking-widest mt-1 drop-shadow-[0_0_10px_rgba(0,240,255,1)]">
+                +{lastMatchPoints} PTS
+              </div>
+            </div>
+          )}
+
+          {/* Missed Overlay (800ms) */}
+          {missedBanner && (
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/75 backdrop-blur-md pointer-events-none animate-fadeUp">
+              <div className="text-5xl mb-2 animate-pulse">⏰</div>
+              <div className="text-3xl font-black text-red-500 tracking-widest uppercase drop-shadow-[0_0_20px_rgba(239,68,68,1)]">
+                MISSED!
+              </div>
+              <div className="text-sm font-bold text-white/60 tracking-widest mt-1">
+                TIME EXPIRED
+              </div>
+            </div>
+          )}
+          {cameraError ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center z-10">
+              <svg className="w-10 h-10 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                <path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /><line x1="3" y1="3" x2="21" y2="21" />
+              </svg>
+              <div>
+                <p className="text-white font-semibold mb-1">Camera Access Required</p>
+                <p className="text-white/50 text-sm mb-4">{cameraError}</p>
+                <button onClick={onRequestCamera} className="btn-cyber text-sm !px-6 !py-2">
+                  <span>Enable Camera</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Mirrored video */}
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover opacity-80"
+                style={{ transform: 'scaleX(-1)' }}
+                autoPlay
+                playsInline
+                muted
+                aria-label="Webcam feed"
+              />
+              {/* Landmark canvas overlay */}
+              <canvas
+                ref={canvasRef}
+                className="absolute inset-0 w-full h-full pointer-events-none z-[2]"
+                style={{ transform: 'scaleX(-1)' }}
+              />
+              {/* Scanning overlay gradient */}
+              <div className="absolute inset-0 pointer-events-none z-[3]"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(0,240,255,0.05) 0%, transparent 40%, transparent 60%, rgba(0,240,255,0.05) 100%)',
+                }}
+              />
+              
+              {/* Clean Face Reticle Brackets Framing Center Face */}
+              <div className="absolute inset-0 pointer-events-none z-[4] flex items-center justify-center">
+                <div className="relative w-56 h-64">
+                  {/* Top-Left Bracket */}
+                  <div className="absolute top-0 left-0 w-8 h-8 border-t-[3px] border-l-[3px] border-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]" />
+                  {/* Top-Right Bracket */}
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]" />
+                  {/* Bottom-Left Bracket */}
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-[3px] border-l-[3px] border-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]" />
+                  {/* Bottom-Right Bracket */}
+                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[3px] border-r-[3px] border-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]" />
                 </div>
               </div>
-            </div>
-            {/* Confidence bar */}
-            <div className="flex flex-col items-end gap-1 min-w-[80px]">
-              <div className="text-xs text-white/40">Confidence</div>
-              <div className="w-20 h-1.5 bg-dark-500 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-accent rounded-full transition-all duration-300"
-                  style={{ width: `${Math.round(detection.confidence * 100)}%` }}
-                />
+            </>
+          )}
+
+          {/* FACE DETECTED Badge (positioned over bottom border) */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[5]">
+            <div className="flex items-center gap-3 bg-[#020718]/90 backdrop-blur-md px-5 py-1.5 border border-neon-cyan/80 shadow-[0_0_15px_rgba(0,240,255,0.4)]" style={{ clipPath: 'polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%, 0 8px)' }}>
+              <span className={`w-2.5 h-2.5 rounded-full ${detection.detected ? 'bg-[#00ff88] shadow-[0_0_8px_#00ff88] animate-pulse' : 'bg-cyan-400'}`} />
+              <span className="text-[11px] font-black tracking-[0.2em] text-neon-cyan uppercase">
+                {detection.detected ? 'FACE DETECTED' : 'FACE DETECTED'}
+              </span>
+              <div className="flex items-center gap-[3px] text-[#00ff88] font-mono text-xs tracking-tighter opacity-90">
+                <span>////////</span>
               </div>
-              <div className="text-xs font-mono text-white/60">{Math.round(detection.confidence * 100)}%</div>
             </div>
           </div>
-        ) : (
-          <div className="text-center text-white/40 text-sm py-1">
-            {cameraError ? 'Camera unavailable' : 'Position your face in front of the camera'}
-          </div>
-        )}
-      </div>
+        </div>
+      </CyberFrame>
     </div>
   );
 };

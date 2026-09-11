@@ -1,15 +1,16 @@
 // Game type definitions
 
 export type Expression = 'neutral' | 'smile' | 'open' | 'unknown';
+export type TargetExpression = 'happy' | 'sad' | 'surprised' | 'angry' | 'neutral' | 'silly';
 export type Move = 'rock' | 'paper' | 'scissors';
 export type RoundResult = 'win' | 'lose' | 'draw';
 export type GameMode = 'classic' | 'timeattack' | 'endless';
 export type GamePhase =
-  | 'idle'
+  | 'idle'        // waiting to start
   | 'countdown'
-  | 'detecting'
-  | 'revealing'
-  | 'result'
+  | 'detecting'   // camera active, user matching
+  | 'matched'     // expression matched successfully
+  | 'timeout'     // ran out of time
   | 'gameover';
 
 export interface RoundRecord {
@@ -41,6 +42,7 @@ export interface FaceDetectionResult {
   confidence: number;
   smileRatio: number;
   mouthOpenRatio: number;
+  blendshapes?: Record<string, number>;
 }
 
 export interface DetectionThresholds {
@@ -90,3 +92,25 @@ export const EXPRESSION_EMOJI: Record<Expression, string> = {
   open: '😮',
   unknown: '❓',
 };
+
+// ---------- Face Reaction Game Mappings ----------
+
+export interface TargetExpressionData {
+  label: string;
+  emoji: string;
+  /** Which detected expression(s) satisfy this target */
+  matchesDetection: Expression[];
+}
+
+export const TARGET_EXPRESSIONS: Record<TargetExpression, TargetExpressionData> = {
+  happy:     { label: 'Happy',     emoji: '😊', matchesDetection: ['smile'] },
+  sad:       { label: 'Sad',       emoji: '😢', matchesDetection: ['neutral'] },  // neutral/resting
+  surprised: { label: 'Surprised', emoji: '😲', matchesDetection: ['open'] },
+  angry:     { label: 'Angry',     emoji: '😠', matchesDetection: ['neutral'] },  // neutral/tense
+  neutral:   { label: 'Neutral',   emoji: '😐', matchesDetection: ['neutral'] },
+  silly:     { label: 'Silly',     emoji: '😜', matchesDetection: ['open', 'smile'] },
+};
+
+export const ALL_TARGET_EXPRESSIONS: TargetExpression[] = [
+  'happy', 'sad', 'surprised', 'angry', 'neutral', 'silly',
+];

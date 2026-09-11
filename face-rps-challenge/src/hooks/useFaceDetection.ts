@@ -65,7 +65,7 @@ export function useFaceDetection({
         const filesetResolver = await FilesetResolver.forVisionTasks(WASM_PATH);
         const landmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
           baseOptions: { modelAssetPath: MODEL_PATH, delegate: 'GPU' },
-          outputFaceBlendshapes: false,
+          outputFaceBlendshapes: true,
           runningMode: 'VIDEO',
           numFaces: 1,
         });
@@ -166,6 +166,14 @@ export function useFaceDetection({
         try {
           const detection = landmarkerRef.current.detectForVideo(video, timestamp);
 
+          let blendshapes: Record<string, number> | undefined = undefined;
+          if (detection.faceBlendshapes && detection.faceBlendshapes.length > 0) {
+            blendshapes = {};
+            for (const cat of detection.faceBlendshapes[0].categories) {
+              blendshapes[cat.categoryName] = cat.score;
+            }
+          }
+
           const canvas = canvasRef.current;
           const ctx = canvas.getContext('2d');
           if (ctx) {
@@ -180,9 +188,9 @@ export function useFaceDetection({
           const landmarks = detection.faceLandmarks?.[0];
           if (landmarks && landmarks.length > 0) {
             const { smileRatio, mouthOpenRatio } = computeExpressionRatios(landmarks);
-            const raw = classifyExpression(smileRatio, mouthOpenRatio);
+            const raw = classifyExpression(smileRatio, mouthOpenRatio, blendshapes);
             const debounced = debouncerRef.current.push(raw);
-            const finalResult = buildDetectionResult(true, debounced, smileRatio, mouthOpenRatio);
+            const finalResult = buildDetectionResult(true, debounced, smileRatio, mouthOpenRatio, blendshapes);
             if (mountedRef.current) {
               setResult(finalResult);
               onResult?.(finalResult);
@@ -210,44 +218,98 @@ export function useFaceDetection({
   return { videoRef, canvasRef, result, cameraReady, cameraError, requestCamera };
 }
 
+// MediaPipe Landmark Mesh Connections for Futuristic Holographic Face
+const CONTOUR_JAW = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10];
+const CONTOUR_LEFT_EYEBROW = [70, 63, 105, 66, 107];
+const CONTOUR_RIGHT_EYEBROW = [336, 296, 334, 293, 300];
+const CONTOUR_LEFT_EYE = [33, 160, 158, 133, 153, 144, 33];
+const CONTOUR_RIGHT_EYE = [362, 385, 387, 263, 373, 380, 362];
+const CONTOUR_NOSE = [168, 6, 197, 195, 5, 4, 1, 2, 98, 97, 2, 326, 327];
+const CONTOUR_LIPS_OUTER = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 61];
+const CONTOUR_LIPS_INNER = [78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308, 78];
+
+// Key holographic cross lines
+const CROSS_MESH_PAIRS: [number, number][] = [
+  [10, 168], [168, 1], [1, 2], [2, 13], [13, 14], [14, 152],
+  [107, 168], [336, 168], [66, 105], [293, 334],
+  [133, 168], [362, 168], [33, 234], [263, 454],
+  [61, 234], [291, 454], [152, 172], [152, 397],
+  [1, 61], [1, 291], [2, 98], [2, 327]
+];
+
+function drawPath(
+  ctx: CanvasRenderingContext2D,
+  landmarks: Array<{ x: number; y: number }>,
+  indices: number[],
+  w: number,
+  h: number,
+  closePath = false
+) {
+  if (indices.length < 2) return;
+  ctx.beginPath();
+  const first = landmarks[indices[0]];
+  if (!first) return;
+  ctx.moveTo(first.x * w, first.y * h);
+  for (let i = 1; i < indices.length; i++) {
+    const pt = landmarks[indices[i]];
+    if (pt) ctx.lineTo(pt.x * w, pt.y * h);
+  }
+  if (closePath) ctx.closePath();
+  ctx.stroke();
+}
+
 function drawFaceOverlay(
   ctx: CanvasRenderingContext2D,
   landmarks: Array<{ x: number; y: number }>,
   w: number,
   h: number,
 ) {
-  const xs = landmarks.map(l => l.x * w);
-  const ys = landmarks.map(l => l.y * h);
-  const minX = Math.min(...xs), maxX = Math.max(...xs);
-  const minY = Math.min(...ys), maxY = Math.max(...ys);
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
-  const rx = (maxX - minX) / 2 + 16;
-  const ry = (maxY - minY) / 2 + 16;
+  if (!landmarks || landmarks.length < 468) return;
 
   ctx.save();
-  ctx.strokeStyle = 'rgba(99,102,241,0.9)';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([8, 4]);
+
+  // 1. Draw glowing cyan facial mesh lines (futuristic AI mesh like Image 2)
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
+  ctx.lineWidth = 1.0;
+  ctx.shadowColor = 'rgba(0, 240, 255, 0.8)';
+  ctx.shadowBlur = 4;
+
+  drawPath(ctx, landmarks, CONTOUR_JAW, w, h);
+  drawPath(ctx, landmarks, CONTOUR_LEFT_EYEBROW, w, h);
+  drawPath(ctx, landmarks, CONTOUR_RIGHT_EYEBROW, w, h);
+  drawPath(ctx, landmarks, CONTOUR_LEFT_EYE, w, h, true);
+  drawPath(ctx, landmarks, CONTOUR_RIGHT_EYE, w, h, true);
+  drawPath(ctx, landmarks, CONTOUR_NOSE, w, h);
+  drawPath(ctx, landmarks, CONTOUR_LIPS_OUTER, w, h, true);
+  drawPath(ctx, landmarks, CONTOUR_LIPS_INNER, w, h, true);
+
+  // 2. Draw cross connecting geometric grid lines
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+  ctx.lineWidth = 0.75;
   ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  for (const [idx1, idx2] of CROSS_MESH_PAIRS) {
+    const p1 = landmarks[idx1];
+    const p2 = landmarks[idx2];
+    if (p1 && p2) {
+      ctx.moveTo(p1.x * w, p1.y * h);
+      ctx.lineTo(p2.x * w, p2.y * h);
+    }
+  }
   ctx.stroke();
 
-  ctx.setLineDash([]);
-  ctx.lineWidth = 3;
-  const bx = cx - rx, by = cy - ry, bw = rx * 2, bh = ry * 2;
-  const cs = 18;
-  [
-    [bx, by, cs, 0, 0, cs],
-    [bx + bw, by, -cs, 0, 0, cs],
-    [bx, by + bh, cs, 0, 0, -cs],
-    [bx + bw, by + bh, -cs, 0, 0, -cs],
-  ].forEach(([x, y, dx1, dy1, dx2, dy2]) => {
-    ctx.beginPath();
-    ctx.moveTo(x + dx1, y + dy1);
-    ctx.lineTo(x, y);
-    ctx.lineTo(x + dx2, y + dy2);
-    ctx.stroke();
-  });
+  // 3. Draw luminous landmark node dots on key vertices
+  ctx.fillStyle = '#00f0ff';
+  ctx.shadowColor = 'rgba(0, 240, 255, 1)';
+  ctx.shadowBlur = 6;
+  const keyPoints = [10, 152, 234, 454, 1, 61, 291, 33, 263, 70, 300, 13, 14];
+  for (const idx of keyPoints) {
+    const pt = landmarks[idx];
+    if (pt) {
+      ctx.beginPath();
+      ctx.arc(pt.x * w, pt.y * h, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   ctx.restore();
 }

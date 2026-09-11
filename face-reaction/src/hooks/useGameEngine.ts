@@ -3,44 +3,63 @@ import { GameState, Target, GameMetrics } from '../types/game';
 import { generateInitialQueue, generateTarget } from '../utils/targetGenerator';
 import { calculateScore } from '../utils/scoreCalculator';
 
-const GAME_DURATION_MS = 60_000;
-export const DEFAULT_TARGET_DURATION_MS = 5_000; // 5 seconds per target
+export const DEFAULT_TARGET_DURATION_MS = 5_000; // 5 seconds maximum per target
+export const MAX_ROUNDS = 10; // 10 rounds total
 
 export const useGameEngine = () => {
   const [gameState, setGameState] = useState<GameState>('IDLE');
 
-  const [gameTimeLeft, setGameTimeLeft] = useState(GAME_DURATION_MS);
+  // Overall Game Session Timer (counts UP from 0ms: 00:00, 00:01, ...)
+  const [overallGameTimeMs, setOverallGameTimeMs] = useState(0);
+
+  // Expression Timer (counts DOWN from 5000ms: 5, 4, 3, 2, 1, 0)
   const [targetTimeLeft, setTargetTimeLeft] = useState(DEFAULT_TARGET_DURATION_MS);
 
   const [targetQueue, setTargetQueue] = useState<Target[]>([]);
   const [currentTarget, setCurrentTarget] = useState<Target | null>(null);
 
   const [metrics, setMetrics] = useState<GameMetrics>({
-    score: 0, combo: 0, bestCombo: 0, matched: 0, missed: 0, totalReactionTimeMs: 0,
+    score: 0,
+    combo: 0,
+    bestCombo: 0,
+    matched: 0,
+    missed: 0,
+    totalReactionTimeMs: 0,
   });
 
-  // ── Refs (never stale inside rAF loop) ──────────────────────────────────────
-  const gameStateRef       = useRef<GameState>('IDLE');
-  const gameTimeLeftRef    = useRef(GAME_DURATION_MS);
-  const targetTimeLeftRef  = useRef(DEFAULT_TARGET_DURATION_MS);
-  const currentTargetRef   = useRef<Target | null>(null);
-  const lastTickRef        = useRef<number | null>(null);
-  const rafRef             = useRef<number | null>(null);
-  const targetStartRef     = useRef<number>(0);
-  const metricsRef         = useRef(metrics);
-  const isTransitioningRef = useRef(false);
+  // ── Stable Refs for Animation Frame Loop ──────────────────────────────────
+  const gameStateRef          = useRef<GameState>('IDLE');
+  const overallGameTimeRef    = useRef(0);
+  const targetTimeLeftRef     = useRef(DEFAULT_TARGET_DURATION_MS);
+  const currentTargetRef      = useRef<Target | null>(null);
+  const lastTickRef           = useRef<number | null>(null);
+  const rafRef                = useRef<number | null>(null);
+  const targetStartRef        = useRef<number>(0);
+  const metricsRef            = useRef(metrics);
 
-  // Keep refs in sync
+  // Sync refs with state
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
   useEffect(() => { metricsRef.current = metrics; }, [metrics]);
 
   const stopLoop = useCallback(() => {
-    if (rafRef.current !== null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     lastTickRef.current = null;
   }, []);
 
-  // ── Advance to next target ───────────────────────────────────────────────────
+  // ── Advance to next target immediately ─────────────────────────────────────
   const advanceTarget = useCallback(() => {
+    const totalRounds = metricsRef.current.matched + metricsRef.current.missed;
+    if (totalRounds >= MAX_ROUNDS) {
+      // Game Over after 10 rounds
+      stopLoop();
+      gameStateRef.current = 'GAME_OVER';
+      setGameState('GAME_OVER');
+      return;
+    }
+
     setTargetQueue(prevQueue => {
       const newQueue = [...prevQueue];
       const next = newQueue.shift();
@@ -53,43 +72,55 @@ export const useGameEngine = () => {
       return newQueue;
     });
 
+    // Reset expression timer to 5 seconds immediately
     targetTimeLeftRef.current = DEFAULT_TARGET_DURATION_MS;
     setTargetTimeLeft(DEFAULT_TARGET_DURATION_MS);
     targetStartRef.current = performance.now();
-    isTransitioningRef.current = false;
-  }, []);
+  }, [stopLoop]);
 
-  // ── Miss ─────────────────────────────────────────────────────────────────────
+  // ── Handle Miss (5-Second Timeout Expired) ─────────────────────────────────
   const handleMiss = useCallback(() => {
-    if (isTransitioningRef.current || gameStateRef.current !== 'PLAYING') return;
-    setMetrics(prev => ({ ...prev, combo: 0, missed: prev.missed + 1 }));
+    if (gameStateRef.current !== 'PLAYING') return;
+
+    setMetrics(prev => {
+      const newMissed = prev.missed + 1;
+      return {
+        ...prev,
+        combo: 0,
+        missed: newMissed,
+      };
+    });
+
     advanceTarget();
   }, [advanceTarget]);
 
-  // ── Match ─────────────────────────────────────────────────────────────────────
+  // ── Handle Match (Immediate Success) ──────────────────────────────────────
   const handleMatch = useCallback((reactionTimeMs: number): number => {
-    if (isTransitioningRef.current || gameStateRef.current !== 'PLAYING') return 0;
-    isTransitioningRef.current = true;
+    if (gameStateRef.current !== 'PLAYING') return 0;
 
     const clampedReaction = Math.max(0, Math.min(reactionTimeMs, DEFAULT_TARGET_DURATION_MS));
     const { pointsAdded } = calculateScore(clampedReaction, metricsRef.current.combo);
 
     setMetrics(prev => {
       const newCombo = prev.combo + 1;
+      const newMatched = prev.matched + 1;
       return {
         ...prev,
         score: prev.score + pointsAdded,
         combo: newCombo,
         bestCombo: Math.max(prev.bestCombo, newCombo),
-        matched: prev.matched + 1,
+        matched: newMatched,
         totalReactionTimeMs: prev.totalReactionTimeMs + clampedReaction,
       };
     });
 
-    return pointsAdded;
-  }, []);
+    // Immediately advance to next expression without waiting
+    advanceTarget();
 
-  // ── Game loop ─────────────────────────────────────────────────────────────────
+    return pointsAdded;
+  }, [advanceTarget]);
+
+  // ── High Precision Timestamp Game Loop ────────────────────────────────────
   const gameLoop = useCallback((ts: number) => {
     if (gameStateRef.current !== 'PLAYING') return;
 
@@ -97,38 +128,26 @@ export const useGameEngine = () => {
     const delta = ts - lastTickRef.current;
     lastTickRef.current = ts;
 
-    // Overall timer (60s)
-    const newGameTime = gameTimeLeftRef.current - delta;
-    if (newGameTime <= 0) {
-      gameTimeLeftRef.current = 0;
-      setGameTimeLeft(0);
-      gameStateRef.current = 'GAME_OVER';
-      setGameState('GAME_OVER');
-      stopLoop();
-      return;
-    }
-    gameTimeLeftRef.current = newGameTime;
-    setGameTimeLeft(newGameTime);
+    // 1. Overall Game Session Timer (counts up continuously)
+    overallGameTimeRef.current += delta;
+    setOverallGameTimeMs(overallGameTimeRef.current);
 
-    // Target timer (5s per target) — only ticks down if not in match feedback transition
-    if (!isTransitioningRef.current) {
-      const newTargetTime = targetTimeLeftRef.current - delta;
-      if (newTargetTime <= 0) {
-        targetTimeLeftRef.current = DEFAULT_TARGET_DURATION_MS;
-        setTargetTimeLeft(DEFAULT_TARGET_DURATION_MS);
-        handleMiss();
-      } else {
-        targetTimeLeftRef.current = newTargetTime;
-        setTargetTimeLeft(newTargetTime);
-      }
+    // 2. Expression Timer (counts down from 5,000ms)
+    const newTargetTime = targetTimeLeftRef.current - delta;
+    if (newTargetTime <= 0) {
+      // 5-second timeout reached: trigger miss & advance immediately
+      targetTimeLeftRef.current = DEFAULT_TARGET_DURATION_MS;
+      setTargetTimeLeft(DEFAULT_TARGET_DURATION_MS);
+      handleMiss();
+    } else {
+      targetTimeLeftRef.current = newTargetTime;
+      setTargetTimeLeft(newTargetTime);
     }
 
     rafRef.current = requestAnimationFrame(gameLoop);
-  }, [stopLoop, handleMiss]);
+  }, [handleMiss]);
 
-  /**
-   * beginPlaying — called directly after face is auto-detected.
-   */
+  // ── Begin New Game Session ────────────────────────────────────────────────
   const beginPlaying = useCallback(() => {
     stopLoop();
 
@@ -139,15 +158,16 @@ export const useGameEngine = () => {
     setCurrentTarget(firstTarget);
     setTargetQueue(initialQueue);
 
-    gameTimeLeftRef.current = GAME_DURATION_MS;
-    setGameTimeLeft(GAME_DURATION_MS);
+    // Reset overall game timer only on fresh game start
+    overallGameTimeRef.current = 0;
+    setOverallGameTimeMs(0);
 
+    // Reset expression timer to 5s
     targetTimeLeftRef.current = DEFAULT_TARGET_DURATION_MS;
     setTargetTimeLeft(DEFAULT_TARGET_DURATION_MS);
 
     setMetrics({ score: 0, combo: 0, bestCombo: 0, matched: 0, missed: 0, totalReactionTimeMs: 0 });
 
-    isTransitioningRef.current = false;
     gameStateRef.current = 'PLAYING';
     setGameState('PLAYING');
     lastTickRef.current = null;
@@ -155,6 +175,7 @@ export const useGameEngine = () => {
     rafRef.current = requestAnimationFrame(gameLoop);
   }, [stopLoop, gameLoop]);
 
+  // ── Pause Game (Preserves exact remaining time on both timers) ─────────────
   const pauseGame = useCallback(() => {
     if (gameStateRef.current !== 'PLAYING') return;
     stopLoop();
@@ -162,6 +183,7 @@ export const useGameEngine = () => {
     setGameState('PAUSED');
   }, [stopLoop]);
 
+  // ── Resume Game (Resumes from exact millisecond values) ────────────────────
   const resumeGame = useCallback(() => {
     if (gameStateRef.current !== 'PAUSED') return;
     gameStateRef.current = 'PLAYING';
@@ -170,13 +192,13 @@ export const useGameEngine = () => {
     rafRef.current = requestAnimationFrame(gameLoop);
   }, [gameLoop]);
 
-  // ── Cleanup on unmount ────────────────────────────────────────────────────────
+  // Cleanup on unmount
   useEffect(() => () => stopLoop(), [stopLoop]);
 
   return {
     gameState,
     setGameState,
-    gameTimeLeft,
+    overallGameTimeMs,
     targetTimeLeft,
     targetQueue,
     currentTarget,
@@ -188,6 +210,5 @@ export const useGameEngine = () => {
     advanceTarget,
     targetDurationMs: DEFAULT_TARGET_DURATION_MS,
     targetStartRef,
-    isTransitioningRef,
   };
 };

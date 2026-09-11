@@ -1,20 +1,118 @@
 @import "tailwindcss";
 
 @theme {
-  --color-dark-900: #0f172a;
-  --color-dark-800: #1e293b;
-  --color-dark-700: #334155;
-  --color-accent: #38bdf8;
-  --color-accent-hover: #0ea5e9;
-  --color-success: #22c55e;
-  --color-error: #ef4444;
+  --color-cyber-dark: #050814;
+  --color-cyber-panel: rgba(8, 14, 30, 0.88);
+  --color-cyber-panel-light: rgba(13, 24, 52, 0.75);
+  --color-cyber-cyan: #00f0ff;
+  --color-cyber-cyan-glow: rgba(0, 240, 255, 0.6);
+  --color-cyber-pink: #ff007f;
+  --color-cyber-pink-glow: rgba(255, 0, 127, 0.6);
+  --color-cyber-blue: #0ea5e9;
+  --font-orbitron: "Orbitron", sans-serif;
+  --font-rajdhani: "Rajdhani", sans-serif;
+}
+
+:root {
+  --cyan-neon: #00f0ff;
+  --pink-neon: #ff007f;
+  --green-neon: #00ff88;
 }
 
 body {
-  background-color: var(--color-dark-900);
-  color: white;
-  font-family: system-ui, -apple-system, sans-serif;
+  background-color: #040816;
+  color: #ffffff;
+  font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   user-select: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom Cyber HUD Utilities */
+.font-orbitron {
+  font-family: 'Orbitron', monospace, sans-serif;
+}
+
+.font-rajdhani {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.hud-panel {
+  background: linear-gradient(180deg, rgba(8, 16, 36, 0.45) 0%, rgba(4, 9, 22, 0.55) 100%);
+  border: 1.5px solid rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.12), inset 0 0 15px rgba(0, 240, 255, 0.04);
+  backdrop-filter: blur(6px);
+  position: relative;
+}
+
+.hud-panel-pink {
+  background: linear-gradient(180deg, rgba(14, 10, 35, 0.45) 0%, rgba(8, 5, 20, 0.55) 100%);
+  border: 1.5px solid rgba(255, 0, 127, 0.35);
+  box-shadow: 0 0 20px rgba(255, 0, 127, 0.12), inset 0 0 15px rgba(255, 0, 127, 0.04);
+  backdrop-filter: blur(6px);
+  position: relative;
+}
+
+.glow-cyan {
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.5), inset 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.glow-pink {
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.5), inset 0 0 10px rgba(255, 0, 127, 0.2);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.8), 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+.text-glow-pink {
+  text-shadow: 0 0 10px rgba(255, 0, 127, 0.8), 0 0 20px rgba(255, 0, 127, 0.4);
+}
+
+.text-glow-green {
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+}
+
+/* Reticle Rotation Animation */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+@keyframes spin-slow-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-spin-slow-reverse {
+  animation: spin-slow-reverse 15s linear infinite;
+}
+
+/* Pulsing radar scan */
+@keyframes cyber-pulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px #00f0ff);
+  }
+}
+
+.animate-cyber-pulse {
+  animation: cyber-pulse 2s ease-in-out infinite;
 }

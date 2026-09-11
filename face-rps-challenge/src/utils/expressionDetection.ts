@@ -1,10 +1,10 @@
 import type { Expression, FaceDetectionResult, DetectionThresholds } from '@/types/game';
 
 export const DEFAULT_THRESHOLDS: DetectionThresholds = {
-  smileRatio: 0.42,       // lowered: easier smile detection
-  mouthOpenRatio: 0.05,   // lowered: easier open-mouth detection
-  minConfidence: 0.3,
-  debounceFrames: 4,      // fewer frames needed = more responsive
+  smileRatio: 0.36,       // responsive smile detection
+  mouthOpenRatio: 0.035,  // responsive open-mouth detection
+  minConfidence: 0.2,
+  debounceFrames: 2,      // fast 2-frame response
 };
 
 /** Compute detection ratios from MediaPipe face landmarks (468-point model).
@@ -49,14 +49,25 @@ export function computeExpressionRatios(
   }
 }
 
-/** Map ratios to an Expression label */
+/** Map ratios or blendshapes to an Expression label */
 export function classifyExpression(
   smileRatio: number,
   mouthOpenRatio: number,
+  blendshapes?: Record<string, number>,
   thresholds: DetectionThresholds = DEFAULT_THRESHOLDS,
 ): Expression {
-  if (mouthOpenRatio >= thresholds.mouthOpenRatio) return 'open';
-  if (smileRatio >= thresholds.smileRatio) return 'smile';
+  const bs = blendshapes || {};
+  const smileScore = Math.max(
+    smileRatio,
+    Math.max(bs['mouthSmileLeft'] ?? 0, bs['mouthSmileRight'] ?? 0)
+  );
+  const openScore = Math.max(
+    mouthOpenRatio * 8,
+    bs['jawOpen'] ?? 0
+  );
+
+  if (openScore >= 0.22 || mouthOpenRatio >= thresholds.mouthOpenRatio) return 'open';
+  if (smileScore >= 0.22 || smileRatio >= thresholds.smileRatio) return 'smile';
   return 'neutral';
 }
 
@@ -74,14 +85,14 @@ export class ExpressionDebouncer {
     if (this.history.length > this.windowSize) {
       this.history.shift();
     }
-    // require >= 80% agreement
+    // require majority agreement
     const counts: Record<string, number> = {};
     for (const e of this.history) counts[e] = (counts[e] ?? 0) + 1;
     const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-    if (dominant && dominant[1] / this.history.length >= 0.8) {
+    if (dominant && dominant[1] / this.history.length >= 0.5) {
       return dominant[0] as Expression;
     }
-    return 'unknown';
+    return dominant ? (dominant[0] as Expression) : 'unknown';
   }
 
   reset() {
@@ -102,7 +113,6 @@ export function computeConfidence(
   if (expression === 'smile') {
     return Math.min(1, smileRatio / thresholds.smileRatio);
   }
-  // neutral – how far from both thresholds
   const distSmile = Math.max(0, thresholds.smileRatio - smileRatio);
   const distOpen = Math.max(0, thresholds.mouthOpenRatio - mouthOpenRatio);
   return Math.min(1, (distSmile + distOpen) / (thresholds.smileRatio + thresholds.mouthOpenRatio));
@@ -113,10 +123,11 @@ export function buildDetectionResult(
   expression: Expression,
   smileRatio: number,
   mouthOpenRatio: number,
+  blendshapes?: Record<string, number>,
   thresholds: DetectionThresholds = DEFAULT_THRESHOLDS,
 ): FaceDetectionResult {
   const confidence = detected
     ? computeConfidence(smileRatio, mouthOpenRatio, expression, thresholds)
     : 0;
-  return { detected, expression, confidence, smileRatio, mouthOpenRatio };
+  return { detected, expression, confidence, smileRatio, mouthOpenRatio, blendshapes };
 }
