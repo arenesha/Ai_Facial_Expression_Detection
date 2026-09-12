@@ -1,0 +1,14 @@
+# Python GPU Dependencies for Ubuntu 24.04 LTS
+# Note: For PyTorch CUDA, install via:
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+
+opencv-python-headless>=4.9.0.80
+mediapipe>=0.10.14
+numpy>=1.26.0,<2.0.0
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+websockets>=12.0
+pydantic>=2.7.0
+pillow>=10.3.0
+python-multipart>=0.0.9
+aiofiles>=23.2.1
