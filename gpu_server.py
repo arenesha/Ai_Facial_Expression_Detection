@@ -16,7 +16,8 @@ import time
 import base64
 from typing import Optional
 from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 from PIL import Image
@@ -162,8 +163,8 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         print(f"WebSocket Error: {e}")
 
-@app.get("/", response_class=HTMLResponse)
-def index():
+@app.get("/camera", response_class=HTMLResponse)
+def camera_test_ui():
     """Built-in cyberpunk web UI to test camera directly against this GPU server."""
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -317,12 +318,37 @@ def index():
 </body>
 </html>"""
 
+# Mount React UI (face-reaction/dist) if built
+DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "face-reaction", "dist")
+
+if os.path.exists(DIST_DIR) and os.path.isfile(os.path.join(DIST_DIR, "index.html")):
+    assets_path = os.path.join(DIST_DIR, "assets")
+    if os.path.exists(assets_path):
+        app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+
+    @app.get("/")
+    def serve_frontend():
+        return FileResponse(os.path.join(DIST_DIR, "index.html"))
+
+    @app.get("/{full_path:path}")
+    def serve_static(full_path: str):
+        target = os.path.join(DIST_DIR, full_path)
+        if full_path and os.path.isfile(target):
+            return FileResponse(target)
+        return FileResponse(os.path.join(DIST_DIR, "index.html"))
+else:
+    @app.get("/", response_class=HTMLResponse)
+    def index():
+        return camera_test_ui()
+
 if __name__ == "__main__":
     import uvicorn
+    PORT = 8003
     print("\n" + "=" * 60)
     print(" 🚀 Python Facial Expression AI Server is RUNNING!")
-    print(" 👉 Open in your browser: http://localhost:8000")
-    print("    (or http://127.0.0.1:8000)")
+    print(f" 👉 Open in your browser: http://localhost:{PORT}")
+    print(f"    (or http://127.0.0.1:{PORT})")
     print(f" GPU Engine: {GPU_NAME} (CUDA: {CUDA_AVAILABLE})")
+    print(f" Camera test interface: http://localhost:{PORT}/camera")
     print("=" * 60 + "\n")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=PORT)

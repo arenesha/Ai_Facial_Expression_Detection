@@ -48,7 +48,7 @@ python3 check_gpu.py
 echo "=================================================================="
 echo "🎉 Setup complete! Choose how you want to run:"
 echo "------------------------------------------------------------------"
-echo " 1) Run Python GPU Server (FastAPI + WebSockets + Web UI on 8000):"
+echo " 1) Run Python GPU Server (FastAPI + WebSockets + Web UI on 8003):"
 echo "    python3 gpu_server.py"
 echo ""
 echo " 2) Run with PM2 for 24/7 background uptime:"
@@ -61,7 +61,7 @@ echo "    python3 detect_webcam_gpu.py"
 echo "=================================================================="
 
 # Start server immediately
-read -p "Do you want to start the Python GPU server right now on port 8000? [Y/n] " -n 1 -r
+read -p "Do you want to start the Python GPU server right now on port 8003? [Y/n] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
     python3 gpu_server.py
