@@ -104,8 +104,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           <div className="flex items-center gap-2">
             <a
               href="https://game.arenesha.ai"
-              target="_blank"
-              rel="noopener noreferrer"
+              target="_self"
               className="hud-pill-btn hub-pill-btn flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#020617]/90 border border-[#00e5ff]/80 text-[#00e5ff] font-orbitron text-[9px] font-extrabold tracking-wider uppercase shadow-[0_0_12px_rgba(0,229,255,0.4)] hover:bg-[#00e5ff]/20 hover:border-[#ff2fa4] hover:text-[#ff2fa4] transition-all"
               title="Explore More AI Games on Arenesha"
             >

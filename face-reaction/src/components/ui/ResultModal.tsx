@@ -131,8 +131,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({ metrics, onPlayAgain, 
 
           <a
             href="https://game.arenesha.ai"
-            target="_blank"
-            rel="noopener noreferrer"
+            target="_self"
             className="flex items-center justify-center gap-1.5 w-full h-11 rounded-xl bg-[#091838]/90 border border-[#ff007f]/70 text-[#ff007f] font-orbitron text-[11px] font-bold tracking-wider uppercase shadow-[0_0_15px_rgba(255,0,127,0.3)] hover:bg-[#ff007f]/25 hover:border-[#ff007f] hover:text-white hover:shadow-[0_0_25px_rgba(255,0,127,0.6)] hover:scale-[1.03] active:scale-[0.97] transition-all no-underline"
             title="Explore More AI Games on Arenesha"
           >
