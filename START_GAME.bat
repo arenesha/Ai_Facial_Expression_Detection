@@ -1,29 +1,39 @@
 @echo off
-title Face Reaction AI Game Launcher
+title Face Reaction AI Launcher
 color 0b
 
-echo [1/2] Checking Python AI Server on port 8003...
+:: Check if Python server is already running on port 8003
 netstat -ano | findstr :8003 >nul
 if %errorlevel% neq 0 (
-    echo Starting Python GPU server in background...
+    echo [1/2] Starting Python AI Server on port 8003...
     start "Face Reaction Python Server" /min cmd /k "python gpu_server.py"
     timeout /t 2 /nobreak >nul
 ) else (
-    echo Server is already active on port 8003.
+    echo [1/2] Python server is already running on port 8003.
 )
 
-echo [2/2] Opening in single dedicated window (no extra tabs)...
-where msedge >nul 2>nul
-if %errorlevel% equ 0 (
-    start msedge --app=http://localhost:8003
+echo [2/2] Focusing single game window (never opens extra tabs)...
+
+:: 1. Try Microsoft Edge App Mode (Strictly single-window, reuses existing window)
+if exist "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" (
+    start "" "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --app=http://localhost:8003
+    exit
+)
+if exist "C:\Program Files\Microsoft\Edge\Application\msedge.exe" (
+    start "" "C:\Program Files\Microsoft\Edge\Application\msedge.exe" --app=http://localhost:8003
     exit
 )
 
-where chrome >nul 2>nul
-if %errorlevel% equ 0 (
-    start chrome --app=http://localhost:8003
+:: 2. Try Google Chrome App Mode
+if exist "C:\Program Files\Google\Chrome\Application\chrome.exe" (
+    start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --app=http://localhost:8003
+    exit
+)
+if exist "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" (
+    start "" "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --app=http://localhost:8003
     exit
 )
 
+:: 3. Fallback
 start http://localhost:8003
 exit

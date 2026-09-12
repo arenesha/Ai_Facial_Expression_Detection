@@ -9,6 +9,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
     <title>FACE REACTION • AI Facial Expression Detection</title>
     <script>
+      // Enforce Single Tab: Close duplicate tabs automatically
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('face_reaction_single_tab');
+        const myId = Math.random().toString(36).substring(7);
+
+        bc.postMessage({ type: 'CHECK_ACTIVE', id: myId });
+
+        bc.onmessage = (e) => {
+          if (e.data && e.data.type === 'CHECK_ACTIVE' && e.data.id !== myId) {
+            // Tell the new tab that an active tab already exists
+            bc.postMessage({ type: 'ALREADY_ACTIVE', targetId: e.data.id });
+          } else if (e.data && e.data.type === 'ALREADY_ACTIVE' && e.data.targetId === myId) {
+            // An existing game tab is already running!
+            // Close this duplicate tab immediately so only one tab remains
+            window.close();
+          }
+        };
+      }
+
       if (window.location.protocol === 'file:') {
         window.location.replace('http://localhost:8003');
       }
