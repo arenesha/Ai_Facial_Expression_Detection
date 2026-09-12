@@ -8,8 +8,68 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
     <title>FACE REACTION • AI Facial Expression Detection</title>
+    <script>
+      // If opened via file:/// protocol, redirect to Python server on port 8003
+      if (window.location.protocol === 'file:') {
+        window.location.replace('http://localhost:8003');
+      }
+    </script>
+    <style>
+      #file-warning {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #030712;
+        color: #f8fafc;
+        font-family: 'Rajdhani', sans-serif;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        text-align: center;
+        z-index: 99999;
+      }
+      .warn-card {
+        background: #0f172a;
+        border: 1px solid #06b6d4;
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 520px;
+        box-shadow: 0 0 40px rgba(6, 182, 212, 0.25);
+      }
+      .warn-btn {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 14px 28px;
+        background: linear-gradient(135deg, #06b6d4, #2563eb);
+        color: white;
+        text-decoration: none;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        border-radius: 10px;
+        font-size: 15px;
+        letter-spacing: 1px;
+      }
+    </style>
   </head>
   <body>
+    <div id="file-warning">
+      <div class="warn-card">
+        <h2 style="font-family: 'Orbitron', sans-serif; color: #22d3ee; margin-bottom: 12px;">⚡ REDIRECTING TO GAME...</h2>
+        <p style="color: #94a3b8; font-size: 16px; line-height: 1.5;">
+          Web browsers block camera access on <code>file:///</code> for security. The game runs through your Python server at:
+        </p>
+        <a href="http://localhost:8003" class="warn-btn">👉 OPEN HTTP://LOCALHOST:8003</a>
+        <p style="color: #64748b; font-size: 13px; margin-top: 18px;">
+          Make sure <code>python gpu_server.py</code> is running in your terminal.
+        </p>
+      </div>
+    </div>
+    <script>
+      if (window.location.protocol === 'file:') {
+        document.getElementById('file-warning').style.display = 'flex';
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
