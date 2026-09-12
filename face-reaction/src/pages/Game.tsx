@@ -117,6 +117,7 @@ export const Game: React.FC = () => {
       <TopBar
         score={metrics.score}
         streak={metrics.combo}
+        matched={metrics.matched}
         currentRound={currentRound}
         maxRounds={10}
         expressionTimeLeftMs={targetTimeLeft}

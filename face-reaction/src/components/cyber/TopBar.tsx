@@ -4,6 +4,7 @@ import { TOTAL_GAME_DURATION_MS } from '@/hooks/useGameEngine';
 interface TopBarProps {
   score: number;
   streak: number;
+  matched: number;
   currentRound: number;
   maxRounds: number;
   expressionTimeLeftMs: number;
@@ -18,7 +19,8 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({
   score,
   streak,
-  currentRound,
+  matched,
+  currentRound: _currentRound,
   expressionTimeLeftMs,
   overallGameTimeMs,
   isAiActive,
@@ -39,7 +41,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const displayScore = !isPlaying && score === 0 ? 0 : score;
   const displayStreak = `${streak}x`;
-  const displayMatched = `${currentRound - 1}`;
+  const displayMatched = `${matched}`;
   const displayTime = !isPlaying && overallGameTimeMs === 0 ? '02:00' : formattedSessionTime;
 
   return (

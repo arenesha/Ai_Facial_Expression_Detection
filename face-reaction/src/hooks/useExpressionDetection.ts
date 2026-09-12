@@ -5,19 +5,22 @@ import { classifyFromBlendshapes, classifyFromLandmarks } from '../utils/express
 
 // Consecutive stable face frames before triggering auto-start
 const AUTO_START_FRAMES = 5;
-// Consecutive matching expression frames to register a MATCH (2 frames = instant response ~60ms)
-const REQUIRED_MATCH_FRAMES = 2;
-// Minimum blendshape confidence to count as a match
-const MATCH_CONFIDENCE_THRESHOLD = 0.22;
+// Immediate match trigger on deliberate expression
+const REQUIRED_MATCH_FRAMES = 1;
+// High confidence threshold (prevents neutral/resting face matches)
+const MATCH_CONFIDENCE_THRESHOLD = 0.45;
+// Zero delay between emoji matches (instant progression in 2-3ms)
+const TARGET_SWITCH_COOLDOWN_MS = 0;
 
 export const useExpressionDetection = (landmarker: FaceLandmarker | null) => {
-  const rafRef             = useRef<number | null>(null);
-  const lastVideoTimeRef   = useRef<number>(-1);
-  const matchFrameCountRef = useRef<number>(0);
-  const lastMatchedExprRef = useRef<string>('');
-  const isRunningRef       = useRef(false);
-  const faceStableFrames   = useRef(0);
-  const autoStartFiredRef  = useRef(false);
+  const rafRef              = useRef<number | null>(null);
+  const lastVideoTimeRef    = useRef<number>(-1);
+  const matchFrameCountRef  = useRef<number>(0);
+  const lastMatchedExprRef  = useRef<string>('');
+  const targetSwitchTimeRef = useRef<number>(0);
+  const isRunningRef        = useRef(false);
+  const faceStableFrames    = useRef(0);
+  const autoStartFiredRef   = useRef(false);
 
   const [detection, setDetection]         = useState<DetectionResult>({ expression: 'unknown', confidence: 0 });
   const [faceCount, setFaceCount]         = useState(0);
@@ -34,9 +37,10 @@ export const useExpressionDetection = (landmarker: FaceLandmarker | null) => {
   const setOnAutoStart  = useCallback((cb: () => void) => { onAutoStartRef.current = cb; }, []);
 
   const setTargetExpression = useCallback((expr: string) => {
-    targetExprRef.current  = expr;
-    matchFrameCountRef.current = 0;
-    lastMatchedExprRef.current = '';
+    targetExprRef.current       = expr;
+    matchFrameCountRef.current  = 0;
+    lastMatchedExprRef.current  = '';
+    targetSwitchTimeRef.current = performance.now();
   }, []);
 
   const setIsPlaying = useCallback((playing: boolean) => {
@@ -99,7 +103,9 @@ export const useExpressionDetection = (landmarker: FaceLandmarker | null) => {
 
             // ── Expression match (only during game) ──────────────────────────
             if (isPlayingRef.current && onMatchRef.current && detected.expression !== 'unknown') {
+              const cooldownPassed = (performance.now() - targetSwitchTimeRef.current) >= TARGET_SWITCH_COOLDOWN_MS;
               if (
+                cooldownPassed &&
                 detected.expression === targetExprRef.current &&
                 detected.confidence >= MATCH_CONFIDENCE_THRESHOLD
               ) {

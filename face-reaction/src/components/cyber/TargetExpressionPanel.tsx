@@ -9,16 +9,14 @@ interface TargetExpressionPanelProps {
 
 export const TargetExpressionPanel: React.FC<TargetExpressionPanelProps> = ({
   currentTarget,
-  detectedExpression,
+  detectedExpression: _detectedExpression,
   isMatching = false,
 }) => {
   const current = currentTarget
     ? EXPRESSIONS[currentTarget.expression] || { label: 'HAPPY', emoji: '😊' }
     : { label: 'HAPPY', emoji: '😊' };
 
-  const activeMatch = isMatching ||
-    (detectedExpression && detectedExpression !== 'unknown' &&
-      currentTarget && detectedExpression === currentTarget.expression);
+  const activeMatch = isMatching;
 
   return (
     <div className="relative w-full h-[285px] p-[2px] clip-cyber-chamfer bg-[#00e5ff]/80 shadow-[0_0_22px_rgba(0,229,255,0.45)]">
